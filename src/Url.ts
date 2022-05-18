@@ -1,14 +1,15 @@
 import { IConfig } from './types';
 
 const buildUrl = ({ bucketName, region }: IConfig): string => {
-  const countryCode = region.split('-')[0];
+  return `https://${bucketName}.s3-${region}.amazonaws.com`;
+  // const countryCode = region.split('-')[0];
 
-  switch (countryCode) {
-    case 'cn':
-      return `https://${bucketName}.s3.${region}.amazonaws.com.${countryCode}`;
-    default:
-      return `https://${bucketName}.s3-${region}.amazonaws.com`;
-  }
+  // switch (countryCode) {
+  //   case 'cn':
+  //     return `https://${bucketName}.s3.${region}.amazonaws.com.${countryCode}`;
+  //   default:
+  //     return `https://${bucketName}.s3-${region}.amazonaws.com`;
+  // }
 };
 
 export default (config: IConfig): string => {
