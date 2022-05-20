@@ -12,7 +12,7 @@ class ReactS3Client {
   constructor(config: IConfig) {
     this.config = config;
   }
-  public async uploadFile(file: File, newFileName?: string): Promise<UploadResponse> {
+  public async uploadFile(file: File): Promise<UploadResponse> {
     throwUploadError(this.config, file);
     let fileExtension: string;
     const fd = new FormData();
@@ -23,7 +23,7 @@ class ReactS3Client {
       fileExtension = file.type.split('/')[1];
     }
 
-    const fileName = `${newFileName || shortId.generate()}.${fileExtension}`;
+    const fileName = `${shortId.generate()}.${fileExtension}`;
     const key = `${this.config.dirName ? this.config.dirName + '/' : ''}${fileName}`;
     const url: string = GetUrl(this.config);
     fd.append('key', key);
