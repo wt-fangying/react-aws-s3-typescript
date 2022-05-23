@@ -1,18 +1,21 @@
 import shortId from 'short-uuid';
-import { dateYMD, xAmzDate } from './Date';
-import { IConfig, ListFileErrorResponse, ListFileResponse, UploadResponse } from './types';
-import { throwUploadError } from './ErrorThrower';
+import {dateYMD, xAmzDate} from './Date';
+import {IConfig, ListFileErrorResponse, ListFileResponse} from './types';
+import {throwUploadError} from './ErrorThrower';
 import GetUrl from './Url';
 import Policy from './Policy';
 import Signature from './Signature';
 import AWS from 'aws-sdk';
+import axios from 'axios';
 
 class ReactS3Client {
   private config: IConfig;
+
   constructor(config: IConfig) {
     this.config = config;
   }
-  public async uploadFile(file: File): Promise<UploadResponse> {
+
+  public async uploadFile(file: File) {
     throwUploadError(this.config, file);
     let fileExtension: string;
     const fd = new FormData();
@@ -39,18 +42,28 @@ class ReactS3Client {
     fd.append('X-Amz-Signature', Signature.getSignature(this.config, dateYMD, Policy.getPolicy(this.config)));
     fd.append('file', file);
 
-    const data = await fetch(url, { method: 'post', body: fd });
-    if (!data.ok) return Promise.reject(data);
-    return Promise.resolve({
-      bucket: this.config.bucketName,
-      key: `${this.config.dirName ? this.config.dirName + '/' : ''}${fileName}`,
-      location: `${url}/${this.config.dirName ? this.config.dirName + '/' : ''}${fileName}`,
-      status: data.status,
-    });
+    try {
+      await axios.post(url, fd, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      })
+
+      return Promise.resolve({
+        status: 200,
+        bucket: this.config.bucketName,
+        key: `${this.config.dirName ? this.config.dirName + '/' : ''}${fileName}`,
+        location: `${url}/${this.config.dirName ? this.config.dirName + '/' : ''}${fileName}`,
+      });
+
+    } catch (e) {
+      return Promise.reject(e)
+    }
+
   }
 
   public async deleteFile(key: string) {
-    const awsConfig = (({ region, accessKeyId, secretAccessKey }) => ({ region, accessKeyId, secretAccessKey }))(
+    const awsConfig = (({region, accessKeyId, secretAccessKey}) => ({region, accessKeyId, secretAccessKey}))(
       this.config,
     );
     AWS.config.update(awsConfig);
@@ -80,7 +93,7 @@ class ReactS3Client {
   }
 
   public async listFiles() {
-    const awsConfig = (({ region, accessKeyId, secretAccessKey }) => ({ region, accessKeyId, secretAccessKey }))(
+    const awsConfig = (({region, accessKeyId, secretAccessKey}) => ({region, accessKeyId, secretAccessKey}))(
       this.config,
     );
     AWS.config.update(awsConfig);
@@ -120,7 +133,7 @@ class ReactS3Client {
         message: 'Objects listed succesfully',
         data: {
           ...req.$response.data,
-          Contents: req.$response.data.Contents?.map((e) => ({ ...e, publicUrl: `${url}/${e.Key}` })),
+          Contents: req.$response.data.Contents?.map((e) => ({...e, publicUrl: `${url}/${e.Key}`})),
         },
       });
     } catch (err) {
