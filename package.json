@@ -1,6 +1,6 @@
 {
   "name": "fy-react-aws-s3",
-  "version": "1.5.8",
+  "version": "1.5.9",
   "description": "Open source npm package to upload your files into AWS S3 Bucket directly using react(typescript template)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

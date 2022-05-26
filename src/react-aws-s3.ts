@@ -15,7 +15,7 @@ class ReactS3Client {
     this.config = config;
   }
 
-  public async uploadFile(file: File) {
+  public async uploadFile(file: File,progress:any,originalFileName?:string,) {
     throwUploadError(this.config, file);
     let fileExtension: string;
     const fd = new FormData();
@@ -46,11 +46,13 @@ class ReactS3Client {
       await axios.post(url, fd, {
         headers: {
           'Content-Type': 'multipart/form-data',
-        }
+        },
+        onUploadProgress:progress
       })
 
       return Promise.resolve({
         status: 200,
+        originalFileName: originalFileName || '',
         bucket: this.config.bucketName,
         key: `${this.config.dirName ? this.config.dirName + '/' : ''}${fileName}`,
         location: `${url}/${this.config.dirName ? this.config.dirName + '/' : ''}${fileName}`,
