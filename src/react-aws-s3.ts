@@ -6,10 +6,13 @@ import GetUrl from './Url';
 import Policy from './Policy';
 import Signature from './Signature';
 import AWS from 'aws-sdk';
-import axios from 'axios';
+import axios, { Canceler } from 'axios';
 
 class ReactS3Client {
   private config: IConfig;
+  // @ts-ignore
+  public cancel: Canceler;
+
 
   constructor(config: IConfig) {
     this.config = config;
@@ -42,11 +45,18 @@ class ReactS3Client {
     fd.append('X-Amz-Signature', Signature.getSignature(this.config, dateYMD, Policy.getPolicy(this.config)));
     fd.append('file', file);
 
+    const CancelToken = axios.CancelToken;
+
     try {
       await axios.post(url, fd, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        cancelToken: new CancelToken((c) => {
+
+          this.cancel = c;
+        }),
+
         onUploadProgress:progress
       })
 
@@ -62,6 +72,10 @@ class ReactS3Client {
       return Promise.reject(e)
     }
 
+  }
+
+  public async channelUpload() {
+    this.cancel();
   }
 
   public async deleteFile(key: string) {
